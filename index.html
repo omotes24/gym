@@ -1,0 +1,902 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NEMESIS</title>
+  <style>
+    :root {
+      --ink: #161411;
+      --muted: #716b63;
+      --line: #ded8cd;
+      --paper: #f8f4ec;
+      --panel: #fffdf7;
+      --red: #e04435;
+      --red-dark: #9e201a;
+      --green: #14936f;
+      --yellow: #f4b740;
+      --blue: #2d6cdf;
+      --shadow: 0 20px 60px rgba(22, 20, 17, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(224, 68, 53, 0.08), transparent 34%),
+        linear-gradient(315deg, rgba(20, 147, 111, 0.11), transparent 38%),
+        var(--paper);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .app {
+      width: min(1180px, 100%);
+      min-height: min(780px, calc(100vh - 56px));
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(330px, 0.8fr);
+      gap: 16px;
+      padding: 18px;
+      border: 1px solid rgba(22, 20, 17, 0.08);
+      border-radius: 28px;
+      background: rgba(255, 253, 247, 0.78);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .stage,
+    .side {
+      min-width: 0;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-rows: auto minmax(420px, 1fr) auto;
+      gap: 16px;
+    }
+
+    .topbar,
+    .scorebar,
+    .side-header,
+    .rival-card,
+    .chat,
+    .feed {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+    }
+
+    .topbar {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 14px 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .mark {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      color: #fff;
+      background: var(--ink);
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .brand-title {
+      margin: 0;
+      font-size: clamp(22px, 2.8vw, 34px);
+      line-height: 0.95;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .brand-sub {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .mode {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f1eadf;
+      white-space: nowrap;
+    }
+
+    .mode span {
+      padding: 9px 13px;
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .mode .active {
+      color: #fff;
+      background: var(--red);
+    }
+
+    .arena {
+      position: relative;
+      min-height: 420px;
+      overflow: hidden;
+      border: 1px solid #1d1a16;
+      border-radius: 24px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.28)),
+        radial-gradient(circle at 50% 18%, rgba(244, 183, 64, 0.22), transparent 22%),
+        #22201d;
+    }
+
+    .arena::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+      background-size: 52px 52px;
+      mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.05));
+      pointer-events: none;
+    }
+
+    .arena-top {
+      position: absolute;
+      z-index: 3;
+      top: 18px;
+      left: 18px;
+      right: 18px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      color: #fff;
+    }
+
+    .challenge-title {
+      margin: 0;
+      font-size: clamp(24px, 4vw, 44px);
+      line-height: 1;
+      font-weight: 950;
+    }
+
+    .challenge-meta {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      max-width: 100%;
+      padding: 6px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      color: rgba(255, 255, 255, 0.92);
+      background: rgba(255, 255, 255, 0.09);
+      backdrop-filter: blur(14px);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .timer {
+      min-width: 112px;
+      padding: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.34);
+      text-align: center;
+      backdrop-filter: blur(16px);
+    }
+
+    .timer b {
+      display: block;
+      font-size: 29px;
+      line-height: 1;
+    }
+
+    .timer span {
+      color: rgba(255, 255, 255, 0.68);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .pose {
+      position: absolute;
+      z-index: 2;
+      left: 10%;
+      right: 10%;
+      bottom: 16%;
+      height: 44%;
+    }
+
+    .floor {
+      position: absolute;
+      left: 6%;
+      right: 6%;
+      bottom: 12%;
+      height: 3px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.5);
+      box-shadow: 0 0 28px rgba(255, 255, 255, 0.18);
+    }
+
+    .joint,
+    .bone {
+      position: absolute;
+      background: #f7f2e9;
+      box-shadow: 0 0 18px rgba(244, 183, 64, 0.38);
+    }
+
+    .joint {
+      width: 18px;
+      height: 18px;
+      border: 3px solid var(--yellow);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .bone {
+      height: 8px;
+      border-radius: 999px;
+      transform-origin: left center;
+    }
+
+    .head { left: 20%; top: 38%; }
+    .shoulder { left: 34%; top: 45%; }
+    .elbow { left: 45%; top: 60%; }
+    .wrist { left: 55%; top: 70%; }
+    .hip { left: 60%; top: 48%; }
+    .knee { left: 74%; top: 56%; }
+    .ankle { left: 88%; top: 65%; }
+
+    .bone-neck { left: 21%; top: 39%; width: 15%; transform: rotate(14deg); }
+    .bone-arm1 { left: 34%; top: 45%; width: 17%; transform: rotate(52deg); }
+    .bone-arm2 { left: 45%; top: 60%; width: 15%; transform: rotate(38deg); }
+    .bone-torso { left: 35%; top: 45%; width: 27%; transform: rotate(5deg); }
+    .bone-leg1 { left: 60%; top: 49%; width: 18%; transform: rotate(18deg); }
+    .bone-leg2 { left: 74%; top: 56%; width: 17%; transform: rotate(27deg); }
+
+    .verdict {
+      position: absolute;
+      z-index: 4;
+      left: 18px;
+      right: 18px;
+      bottom: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .metric {
+      min-height: 94px;
+      min-width: 0;
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 16px;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.43);
+      backdrop-filter: blur(16px);
+    }
+
+    .metric-label {
+      color: rgba(255, 255, 255, 0.66);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .metric-value {
+      margin-top: 8px;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      font-size: clamp(26px, 4vw, 38px);
+      line-height: 1;
+      font-weight: 950;
+    }
+
+    .metric-value small {
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .scorebar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      overflow: hidden;
+    }
+
+    .score {
+      min-height: 98px;
+      min-width: 0;
+      padding: 16px;
+      border-right: 1px solid var(--line);
+    }
+
+    .score:last-child {
+      border-right: 0;
+    }
+
+    .score span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .score strong {
+      display: block;
+      margin-top: 8px;
+      font-size: clamp(24px, 3vw, 34px);
+      line-height: 1;
+      font-weight: 950;
+    }
+
+    .bar {
+      margin-top: 14px;
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #ebe3d6;
+    }
+
+    .fill {
+      height: 100%;
+      border-radius: inherit;
+      background: var(--red);
+    }
+
+    .fill.green { background: var(--green); }
+    .fill.blue { background: var(--blue); }
+
+    .side {
+      display: grid;
+      grid-template-rows: auto auto minmax(280px, 1fr);
+      gap: 16px;
+    }
+
+    .side-header {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+    }
+
+    .side-header span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .side-header b {
+      display: block;
+      margin-top: 4px;
+      font-size: 21px;
+      line-height: 1;
+      font-weight: 950;
+    }
+
+    .live-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 6px rgba(20, 147, 111, 0.16);
+    }
+
+    .rival-card {
+      min-height: 184px;
+      padding: 16px;
+      overflow: hidden;
+      background:
+        linear-gradient(135deg, rgba(224, 68, 53, 0.14), transparent 42%),
+        var(--panel);
+    }
+
+    .rival-row {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+    }
+
+    .avatar {
+      position: relative;
+      width: 62px;
+      height: 62px;
+      flex: 0 0 auto;
+      border: 3px solid #fff;
+      border-radius: 18px;
+      background:
+        linear-gradient(145deg, #171310 0 44%, #e04435 45% 100%);
+      box-shadow: 0 14px 28px rgba(158, 32, 26, 0.2);
+    }
+
+    .avatar::before,
+    .avatar::after {
+      content: "";
+      position: absolute;
+      top: 24px;
+      width: 9px;
+      height: 4px;
+      border-radius: 999px;
+      background: #fff3e4;
+    }
+
+    .avatar::before { left: 14px; transform: rotate(14deg); }
+    .avatar::after { right: 14px; transform: rotate(-14deg); }
+
+    .rival-name {
+      margin: 0;
+      font-size: 26px;
+      line-height: 1;
+      font-weight: 950;
+    }
+
+    .rival-rank {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .rival-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .rival-stat {
+      min-height: 72px;
+      min-width: 0;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.46);
+    }
+
+    .rival-stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .rival-stat b {
+      display: block;
+      margin-top: 7px;
+      font-size: 24px;
+      line-height: 1;
+      font-weight: 950;
+    }
+
+    .chat {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .chat-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 58px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .chat-title span {
+      color: var(--red-dark);
+    }
+
+    .messages {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    .bubble {
+      max-width: 88%;
+      padding: 12px 13px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.48;
+      font-weight: 700;
+    }
+
+    .bubble.rival {
+      align-self: flex-start;
+      color: #fff;
+      background: var(--ink);
+      border-bottom-left-radius: 5px;
+    }
+
+    .bubble.user {
+      align-self: flex-end;
+      background: #efe7dc;
+      border-bottom-right-radius: 5px;
+    }
+
+    .quick {
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      border-top: 1px solid var(--line);
+      background: #fbf7ef;
+    }
+
+    .quick button {
+      min-height: 42px;
+      flex: 1;
+      border: 0;
+      border-radius: 12px;
+      color: #fff;
+      background: var(--red);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .quick button.secondary {
+      color: var(--ink);
+      background: #ebe3d6;
+    }
+
+    @media (max-width: 900px) {
+      body {
+        padding: 14px;
+      }
+
+      .app {
+        min-height: auto;
+        grid-template-columns: 1fr;
+        border-radius: 22px;
+        padding: 12px;
+      }
+
+      .stage {
+        grid-template-rows: auto minmax(500px, 68vh) auto;
+      }
+
+      .topbar,
+      .side-header {
+        align-items: flex-start;
+      }
+
+      .mode {
+        display: none;
+      }
+
+      .arena-top {
+        flex-direction: column;
+      }
+
+      .timer {
+        align-self: flex-end;
+      }
+
+      .verdict,
+      .scorebar {
+        grid-template-columns: 1fr;
+      }
+
+      .score {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .score:last-child {
+        border-bottom: 0;
+      }
+
+      .side {
+        grid-template-rows: auto auto minmax(360px, auto);
+      }
+    }
+
+    @media (max-width: 520px) {
+      .app {
+        width: 100%;
+      }
+
+      .topbar {
+        min-height: 92px;
+        padding: 12px;
+      }
+
+      .brand {
+        gap: 10px;
+        width: 100%;
+      }
+
+      .mark {
+        width: 48px;
+        height: 48px;
+        border-radius: 13px;
+        font-size: 23px;
+      }
+
+      .brand-title {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 27px;
+      }
+
+      .brand-sub {
+        max-width: 210px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .challenge-title {
+        font-size: 34px;
+      }
+
+      .challenge-meta {
+        max-width: 260px;
+      }
+
+      .pill {
+        font-size: 11px;
+      }
+
+      .arena {
+        border-radius: 20px;
+      }
+
+      .pose {
+        left: 2%;
+        right: 2%;
+      }
+
+      .verdict {
+        gap: 8px;
+      }
+
+      .metric {
+        min-height: 82px;
+        padding: 12px;
+      }
+
+      .metric-value {
+        font-size: 34px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app" aria-label="NEMESIS workout screen">
+    <section class="stage">
+      <header class="topbar">
+        <div class="brand">
+          <div class="mark">N</div>
+          <div>
+            <h1 class="brand-title">NEMESIS</h1>
+            <p class="brand-sub">Day 18 / Push-up Rival League</p>
+          </div>
+        </div>
+        <div class="mode" aria-label="mode selector">
+          <span>RUN</span>
+          <span class="active">PUSH</span>
+          <span>CORE</span>
+        </div>
+      </header>
+
+      <section class="arena" aria-label="pose judge">
+        <div class="arena-top">
+          <div>
+            <h2 class="challenge-title">腕立て 22回</h2>
+            <div class="challenge-meta">
+              <span class="pill">フォーム判定中</span>
+              <span class="pill">KAI +5%</span>
+              <span class="pill">勝利条件 22 / 22</span>
+            </div>
+          </div>
+          <div class="timer">
+            <b id="timer">00:41</b>
+            <span>TIME LEFT</span>
+          </div>
+        </div>
+
+        <div class="pose" aria-hidden="true">
+          <div class="bone bone-neck"></div>
+          <div class="bone bone-arm1"></div>
+          <div class="bone bone-arm2"></div>
+          <div class="bone bone-torso"></div>
+          <div class="bone bone-leg1"></div>
+          <div class="bone bone-leg2"></div>
+          <div class="joint head"></div>
+          <div class="joint shoulder"></div>
+          <div class="joint elbow"></div>
+          <div class="joint wrist"></div>
+          <div class="joint hip"></div>
+          <div class="joint knee"></div>
+          <div class="joint ankle"></div>
+        </div>
+        <div class="floor" aria-hidden="true"></div>
+
+        <div class="verdict">
+          <div class="metric">
+            <div class="metric-label">YOUR REPS</div>
+            <div class="metric-value"><span id="reps">18</span><small>/ 22</small></div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">FORM SCORE</div>
+            <div class="metric-value"><span id="form">91</span><small>%</small></div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">RIVAL GAP</div>
+            <div class="metric-value"><span id="gap">-4</span><small>reps</small></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="scorebar" aria-label="today score">
+        <div class="score">
+          <span>今日の勝率</span>
+          <strong>46%</strong>
+          <div class="bar"><div class="fill" style="width:46%"></div></div>
+        </div>
+        <div class="score">
+          <span>連続記録</span>
+          <strong>12日</strong>
+          <div class="bar"><div class="fill green" style="width:72%"></div></div>
+        </div>
+        <div class="score">
+          <span>宿敵レベル</span>
+          <strong>Lv. 7</strong>
+          <div class="bar"><div class="fill blue" style="width:64%"></div></div>
+        </div>
+      </section>
+    </section>
+
+    <aside class="side" aria-label="nemesis rival panel">
+      <section class="side-header">
+        <div>
+          <span>NEXT MESSAGE</span>
+          <b>21:30 に挑発</b>
+        </div>
+        <div class="live-dot" aria-hidden="true"></div>
+      </section>
+
+      <section class="rival-card">
+        <div class="rival-row">
+          <div class="avatar" aria-hidden="true"></div>
+          <div>
+            <h2 class="rival-name">KAI</h2>
+            <div class="rival-rank">宿敵 / 勝敗 8 - 9</div>
+          </div>
+        </div>
+        <div class="rival-stats">
+          <div class="rival-stat">
+            <span>今日の記録</span>
+            <b>22回</b>
+          </div>
+          <div class="rival-stat">
+            <span>弱点</span>
+            <b>終盤</b>
+          </div>
+        </div>
+      </section>
+
+      <section class="chat" aria-label="rival chat">
+        <div class="chat-title">
+          <span>KAIから着信</span>
+          <b>LIVE</b>
+        </div>
+        <div class="messages" id="messages">
+          <div class="bubble rival">雨の日に逃げたやつが、今日は18回まで来たか。</div>
+          <div class="bubble user">あと4回で抜く。</div>
+          <div class="bubble rival">その4回でいつも崩れる。肘、外に逃げてるぞ。</div>
+          <div class="bubble rival">勝ちたいなら、次の1回を雑にするな。</div>
+        </div>
+        <div class="quick">
+          <button type="button" id="repButton">1回追加</button>
+          <button type="button" class="secondary" id="tauntButton">返す</button>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    const reps = document.getElementById("reps");
+    const gap = document.getElementById("gap");
+    const form = document.getElementById("form");
+    const messages = document.getElementById("messages");
+    const repButton = document.getElementById("repButton");
+    const tauntButton = document.getElementById("tauntButton");
+    const timer = document.getElementById("timer");
+
+    let repCount = 18;
+    let seconds = 41;
+    const replies = [
+      "見てろ。今日は逃げない。",
+      "肘は直した。次で詰める。",
+      "22回で黙らせる。"
+    ];
+    const rivalLines = [
+      "今の1回は認める。だがまだ届かない。",
+      "呼吸が乱れた。ここからが勝負だ。",
+      "あと少しで俺の記録だ。雑になったら負けだぞ。"
+    ];
+
+    function addMessage(text, side) {
+      const bubble = document.createElement("div");
+      bubble.className = `bubble ${side}`;
+      bubble.textContent = text;
+      messages.appendChild(bubble);
+      while (messages.children.length > 5) {
+        messages.removeChild(messages.firstElementChild);
+      }
+    }
+
+    repButton.addEventListener("click", () => {
+      repCount = Math.min(repCount + 1, 24);
+      reps.textContent = repCount;
+      gap.textContent = repCount - 22;
+      form.textContent = Math.max(84, 93 - Math.abs(22 - repCount));
+      addMessage(rivalLines[(repCount - 19) % rivalLines.length], "rival");
+    });
+
+    tauntButton.addEventListener("click", () => {
+      addMessage(replies[Math.floor(Math.random() * replies.length)], "user");
+    });
+
+    setInterval(() => {
+      seconds = Math.max(0, seconds - 1);
+      const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
+      const ss = String(seconds % 60).padStart(2, "0");
+      timer.textContent = `${mm}:${ss}`;
+    }, 1000);
+  </script>
+</body>
+</html>
